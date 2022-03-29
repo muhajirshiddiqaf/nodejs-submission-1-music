@@ -1,7 +1,6 @@
 /* eslint-disable camelcase */
-
-exports.up = pgm => {
-    pgm.createTable('notes', {
+exports.up = (pgm) => {
+    pgm.createTable('songs', {
       id: {
         type: 'VARCHAR(50)',
         primaryKey: true,
@@ -10,13 +9,25 @@ exports.up = pgm => {
         type: 'TEXT',
         notNull: true,
       },
-      body: {
+      year: {
+        type: 'integer',
+        notNull: true,
+      },
+      genre: {
         type: 'TEXT',
         notNull: true,
       },
-      tags: {
-        type: 'TEXT[]',
+      performer: {
+        type: 'TEXT',
         notNull: true,
+      },
+      duration: {
+        type: 'integer',
+        notNull: false,
+      },
+      albumid: {
+        type: 'TEXT',
+        notNull: false,
       },
       created_at: {
         type: 'TEXT',
@@ -29,8 +40,6 @@ exports.up = pgm => {
     });
   };
   
-
-  exports.down = (pgm) => {
-    pgm.dropTable('notes');
-  };
-  
+exports.down = pgm => {
+    pgm.dropTable('songs');
+};

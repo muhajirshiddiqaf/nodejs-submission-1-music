@@ -47,6 +47,14 @@ const routes = (handler,auth) => [
         auth: auth,
       },  
     },
+    {
+      method: 'GET',
+      path: '/playlists/{id}/activities',
+      handler: handler.getPlaylistsActivities,
+      options: {
+        auth: auth,
+      },  
+    },
   ];
    
   module.exports = routes;

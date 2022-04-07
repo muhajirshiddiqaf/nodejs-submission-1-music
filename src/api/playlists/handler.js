@@ -11,7 +11,7 @@ class PlaylistsHandler {
     this.postPlaylistSongHandler = this.postPlaylistSongHandler.bind(this);
     this.getPlaylistDetailByIdHandler = this.getPlaylistDetailByIdHandler.bind(this);
     this.deleteSongPlaylistByIdHandler = this.deleteSongPlaylistByIdHandler.bind(this);
-    
+    this.getPlaylistsActivities = this.getPlaylistsActivities.bind(this);
   }
  
   async postPlaylistHandler(request, h) {
@@ -64,9 +64,10 @@ class PlaylistsHandler {
     const { id: idPlaylist } = request.params;
     const { id: credentialId } = request.auth.credentials;
 
-    await this._service.verifyPlaylistOwner(idPlaylist,credentialId);
+    await this._service.verifyPlaylistAccess(idPlaylist,credentialId);
     await this._service.verifySongs(songId);
     const playlistId = await this._service.addPlaylistSongs({ idPlaylist, songId });
+    await this._service.addPlaylistActivities(idPlaylist,songId,credentialId,"add")
 
     const response = h.response({
       status: 'success',
@@ -83,7 +84,7 @@ class PlaylistsHandler {
   async getPlaylistDetailByIdHandler(request, h) {
     const { id: idPlaylist } = request.params;
     const { id: credentialId } = request.auth.credentials;
-    await this._service.verifyPlaylistOwner(idPlaylist,credentialId);
+    await this._service.verifyPlaylistAccess(idPlaylist,credentialId);
     
     const playlist = await this._service.getPlaylistById(credentialId,idPlaylist);
     const songs = await this._service.getSongsByPlaylistById(idPlaylist);
@@ -107,15 +108,31 @@ class PlaylistsHandler {
     const { id } = request.params;
     const { id: credentialId } = request.auth.credentials;
 
-    await this._service.verifyPlaylistOwner(id,credentialId);
+    await this._service.verifyPlaylistAccess(id,credentialId);
     await this._service.deleteSongPlaylistById(songId,id);
-
+    await this._service.addPlaylistActivities(id,songId,credentialId,"delete")
+    
     return {
       status: 'success',
       message: 'Song berhasil dihapus dari playlist',
     };
   }
 
+  async getPlaylistsActivities(request, h) {
+    const { id: idPlaylist } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+    await this._service.verifyPlaylistAccess(idPlaylist,credentialId);
+    
+    const activities = await this._service.getPlaylistsActivities(idPlaylist);
+    
+    return {
+      status: 'success',
+      data: {
+        playlistId:idPlaylist,
+        activities : activities
+      },
+    };      
+  }  
 }
  
 module.exports = PlaylistsHandler;

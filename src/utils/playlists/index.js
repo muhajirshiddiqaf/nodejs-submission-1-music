@@ -18,5 +18,18 @@ const mapDBToModel = ({
     performer
   });
     
-  module.exports = { mapDBToModel,mapDBToModelSongs };
+  const mapDBToModelActivities = ({ 
+    username,
+    title,
+    action,
+    time
+  }) => ({
+    username,
+    title,
+    action,
+    time
+  });
+    
+
+  module.exports = { mapDBToModel,mapDBToModelSongs,mapDBToModelActivities };
   

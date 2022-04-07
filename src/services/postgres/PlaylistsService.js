@@ -1,13 +1,14 @@
 const { Pool } = require('pg');
 const { nanoid } = require('nanoid');
 const InvariantError = require('../../exceptions/InvariantError');
-const { mapDBToModel,mapDBToModelSongs } = require('../../utils/playlists');
+const { mapDBToModel,mapDBToModelSongs,mapDBToModelActivities } = require('../../utils/playlists');
 const NotFoundError = require('../../exceptions/NotFoundError');
 const AuthorizationError = require('../../exceptions/AuthorizationError');
 
 class PlaylistsService {
-  constructor() {
+  constructor(collaborationService) {
     this._pool = new Pool();
+    this._collaborationService = collaborationService;
   }
  
   async addPlaylist({ name, credentialId }) {
@@ -40,9 +41,9 @@ class PlaylistsService {
   async getPlaylists({ credentialId }) {
     const query = {
       text: `SELECT a.id,a.name,c.username 
-      FROM playlists a JOIN playlist_colaborations b on a.owner = b.user_id
-      JOIN users c on b.user_id = c.id AND a.id = b.playlist_id
-      WHERE c.id = $1
+      FROM playlists a JOIN playlist_colaborations b on a.id = b.playlist_id
+      JOIN users c on a.owner = c.id
+      WHERE b.user_id = $1
       `,
       values: [credentialId],
     };
@@ -73,9 +74,9 @@ class PlaylistsService {
   async getPlaylistById(credentialId,id) {
     const query = {
       text: `SELECT a.id,a.name,c.username 
-      FROM playlists a JOIN playlist_colaborations b on a.owner = b.user_id
-      JOIN users c on b.user_id = c.id AND a.id = b.playlist_id
-      WHERE c.id = $1 and a.id = $2
+      FROM playlists a JOIN playlist_colaborations b on a.id = b.playlist_id
+      JOIN users c on a.owner = c.id
+      WHERE b.user_id = $1 and a.id = $2
       `,
       values: [credentialId,id],
     };
@@ -151,9 +152,9 @@ class PlaylistsService {
       throw new NotFoundError('Resource yang Anda minta tidak ditemukan');
     }
  
-    const note = result.rows[0];
+    const playlist = result.rows[0];
  
-    if (note.owner !== owner) {
+    if (playlist.owner !== owner) {
       throw new AuthorizationError('Anda tidak berhak mengakses resource ini');
     }
   }
@@ -170,6 +171,61 @@ class PlaylistsService {
       throw new NotFoundError('Song tidak ditemukan');
     }
   }
+
+  async addPlaylistActivities(
+    playlistId,
+    songId,
+    userId,
+    action
+  ) {
+    const id = `Activities-${nanoid(16)}`;
+    const time = new Date().toISOString();
+
+    const query = {
+      text: 'INSERT INTO playlist_song_activities VALUES($1, $2, $3, $4, $5, $6) RETURNING id',
+      values: [id, playlistId, songId, userId, action,time],
+    };
+ 
+    const result = await this._pool.query(query);
+ 
+    if (!result.rows[0].id) {
+      throw new InvariantError('gagal menambahkan activities');
+    }
+ 
+    return result.rows[0].id;
+  }
+
+  async getPlaylistsActivities(playlistId) {
+    const query = {
+      text: `SELECT c.username, d.title,b.action,b.time
+      FROM playlists a JOIN playlist_song_activities b on a.id = b.playlist_id
+      JOIN users c on a.owner = c.id 
+			JOIN songs d on b.song_id = d.id
+      where b.playlist_id = $1
+      order by b.time asc
+      `,
+      values: [playlistId],
+    };
+
+    const result = await this._pool.query(query);
+    return result.rows.map(mapDBToModelActivities);
+  }
+
+  async verifyPlaylistAccess(playlistId, userId) {
+    try {
+    await this.verifyPlaylistOwner(playlistId, userId)
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      try {
+        await this._collaborationService.verifyCollaborator(playlistId, userId);
+      } catch {
+        throw error;
+      }
+    }
+  }
+
 
 }
 

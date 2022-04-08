@@ -14,7 +14,7 @@ exports.up = (pgm) => {
       },
       user_id: {
         type: 'VARCHAR(50)',
-        primaryKey: true,
+        notNull: true,
       },
       created_at: {
         type: 'TEXT',

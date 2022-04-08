@@ -14,19 +14,19 @@ exports.up = (pgm) => {
       },
       song_id: {
         type: 'VARCHAR(50)',
-        primaryKey: true,
+        notNull: true,
       },
       user_id: {
         type: 'VARCHAR(50)',
-        primaryKey: true,
+        notNull: true,
       },
       action: {
         type: 'VARCHAR(50)',
-        primaryKey: true,
+        notNull: true,
       },
       time: {
         type: 'VARCHAR(50)',
-        primaryKey: true,
+        notNull: true,
       },
     });
 

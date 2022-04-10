@@ -9,11 +9,9 @@ class AlbumsService {
  
   addAlbum({ title, body, tags }) {
     const id = nanoid(16);
-    const createdAt = new Date().toISOString();
-    const updatedAt = createdAt;
  
     const newAlbum = {
-      title, tags, body, id, createdAt, updatedAt,
+      title, tags, body, id
     };
  
     this._albums.push(newAlbum);
@@ -46,7 +44,7 @@ class AlbumsService {
       throw new NotFoundError('Gagal memperbarui album. Id tidak ditemukan');
     }
  
-    const updatedAt = new Date().toISOString();
+    const updatedAt = new Date();
  
     this._albums[index] = {
       ...this._albums[index],

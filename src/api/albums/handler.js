@@ -1,8 +1,7 @@
-const ClientError = require('../../exceptions/ClientError');
- 
 class AlbumsHandler {
-  constructor(service, validator) {
+  constructor(service, cacheService, validator) {
     this._service = service;
+    this._cacheService = cacheService;
     this._validator = validator;
  
     this.postAlbumHandler = this.postAlbumHandler.bind(this);
@@ -10,6 +9,8 @@ class AlbumsHandler {
     this.getAlbumByIdHandler = this.getAlbumByIdHandler.bind(this);
     this.putAlbumByIdHandler = this.putAlbumByIdHandler.bind(this);
     this.deleteAlbumByIdHandler = this.deleteAlbumByIdHandler.bind(this);
+    this.postAlbumLikeHandler = this.postAlbumLikeHandler.bind(this);
+    this.getAlbumLikeHandler = this.getAlbumLikeHandler.bind(this);    
   }
  
   async postAlbumHandler(request, h) {
@@ -52,6 +53,7 @@ class AlbumsHandler {
             "id": album.id,
             "name": album.name,
             "year": album.year,
+            "coverUrl": album.cover,
             "songs" : songs  
           }
         },
@@ -80,6 +82,44 @@ class AlbumsHandler {
         message: 'Album berhasil dihapus',
       };
   }
+
+  async postAlbumLikeHandler(request, h) {
+    const { id: albumId } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+    await this._service.getAlbumById(albumId);
+    const status = await this._service.addLikeAlbum(albumId, credentialId);
+
+    const response = h.response({
+      status: 'success',
+      message: status,
+    });
+    response.code(201);
+    
+    return response;
+  }
+
+  async getAlbumLikeHandler(request, h) {
+    const { id } = request.params;
+    try {
+      const result = await this._cacheService.get(`albums:${id}`);
+      const response = h.response({
+        status: 'success',
+        data: {
+          likes: parseInt(JSON.parse(result).total_likes),
+        },
+      });
+      response.header('X-Data-Source','cache');
+      return response;
+    } catch (error) {
+      const likes = await this._service.getLikeAlbums(id);
+      return {
+        status: 'success',
+        data: {
+          likes: parseInt(likes.total_likes),
+        },
+      };    
+    }
+  }  
 }
  
 module.exports = AlbumsHandler;

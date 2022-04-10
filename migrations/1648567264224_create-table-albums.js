@@ -13,16 +13,22 @@ exports.up = (pgm) => {
         type: 'integer',
         notNull: true,
       },
-      created_at: {
+      cover: {
         type: 'TEXT',
+        notNull: false,
+      },
+      created_at: {
+        type: 'timestamp',
         notNull: true,
+        default: pgm.func('current_timestamp'),
       },
       updated_at: {
-        type: 'TEXT',
+        type: 'timestamp',
         notNull: true,
+        default: pgm.func('current_timestamp'),
       },
     });
-  };
+};
   
 exports.down = pgm => {
     pgm.dropTable('albums');

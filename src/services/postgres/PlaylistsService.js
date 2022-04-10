@@ -14,12 +14,10 @@ class PlaylistsService {
   async addPlaylist({ name, credentialId }) {
     const id = `Playlist-${nanoid(16)}`;
     const idColaboration = `Colaboration-${nanoid(16)}`;
-    const createdAt = new Date().toISOString();
-    const updatedAt = createdAt;
 
     const query = {
-      text: 'INSERT INTO playlists VALUES($1, $2, $3, $4, $5) RETURNING id',
-      values: [id, name, credentialId, createdAt, updatedAt],
+      text: 'INSERT INTO playlists VALUES($1, $2, $3) RETURNING id',
+      values: [id, name, credentialId],
     };
  
     const result = await this._pool.query(query);
@@ -28,8 +26,8 @@ class PlaylistsService {
       throw new InvariantError('Playlist gagal ditambahkan');
     }else{
       const query_colaborations = {
-        text: 'INSERT INTO playlist_colaborations VALUES($1, $2, $3, $4, $5) RETURNING id',
-        values: [idColaboration, id, credentialId, createdAt, updatedAt],
+        text: 'INSERT INTO playlist_colaborations VALUES($1, $2, $3) RETURNING id',
+        values: [idColaboration, id, credentialId],
       };
    
       await this._pool.query(query_colaborations);  
@@ -54,12 +52,10 @@ class PlaylistsService {
 
   async addPlaylistSongs({ idPlaylist, songId }) {
     const id = `PlaylistSong-${nanoid(16)}`;
-    const createdAt = new Date().toISOString();
-    const updatedAt = createdAt;
 
     const query = {
-      text: 'INSERT INTO playlist_songs VALUES($1, $2, $3, $4, $5) RETURNING id',
-      values: [id, idPlaylist, songId, createdAt, updatedAt],
+      text: 'INSERT INTO playlist_songs VALUES($1, $2, $3) RETURNING id',
+      values: [id, idPlaylist, songId],
     };
  
     const result = await this._pool.query(query);
@@ -101,7 +97,7 @@ class PlaylistsService {
   }
 
   async editPlaylistById(id, { name, year }) {
-    const updatedAt = new Date().toISOString();
+    const updatedAt = new Date();
     const query = {
       text: 'UPDATE playlists SET name = $1, year = $2 , updated_at = $3 WHERE id = $4 RETURNING id',
       values: [name, year, updatedAt, id],
@@ -179,11 +175,10 @@ class PlaylistsService {
     action
   ) {
     const id = `Activities-${nanoid(16)}`;
-    const time = new Date().toISOString();
 
     const query = {
-      text: 'INSERT INTO playlist_song_activities VALUES($1, $2, $3, $4, $5, $6) RETURNING id',
-      values: [id, playlistId, songId, userId, action,time],
+      text: 'INSERT INTO playlist_song_activities VALUES($1, $2, $3, $4, $5) RETURNING id',
+      values: [id, playlistId, songId, userId, action],
     };
  
     const result = await this._pool.query(query);
